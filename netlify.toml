@@ -1,0 +1,10 @@
+[build]
+  command = "expo build:web"
+  publish = "web-build"
+
+[dev]
+  command = "expo start --web"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
