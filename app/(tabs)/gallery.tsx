@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, View, Image, Button, StyleSheet, Text, ActivityIndicator } from 'react-native';
-import { usePhotoContext } from '../../components/PhotoContext';
+import { usePhotos } from '../../contexts/PhotoContext';
 import { initModel, isModelReady, predictFromUri } from '../lib/model';
 
 export default function GalleryScreen() {
-  const { photos, removePhoto } = usePhotoContext();
+  const { photos, deletePhoto } = usePhotos();
 
   const [errorUris, setErrorUris] = useState<string[]>([]);
   const [ready, setReady] = useState<boolean>(false);
@@ -67,7 +67,7 @@ export default function GalleryScreen() {
         const result = results[photo.uri];
         const isLoading = predicting === photo.uri;
         return (
-          <View key={photo.uri} style={styles.photoContainer}>
+          <View key={photo.id} style={styles.photoContainer}>
             {errorUris.includes(photo.uri) ? (
               <Text style={{ color: 'red', marginBottom: 8 }}>
                 Failed to load image: {photo.uri}
@@ -94,7 +94,7 @@ export default function GalleryScreen() {
               />
             )}
             <View style={{ height: 8 }} />
-            <Button title="Delete" onPress={() => removePhoto(photo.uri)} />
+            <Button title="Delete" onPress={() => deletePhoto(photo.id)} />
           </View>
         );
       })}

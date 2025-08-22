@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image, Alert } from 'react-native';
 import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router';
+import { usePhotos } from '../../contexts/PhotoContext';
 
 export default function ResultScreen() {
   const navigation = useNavigation();
@@ -10,6 +11,12 @@ export default function ResultScreen() {
     photoBase64?: string;
     aiStatus?: string;
   }>();
+  const { photos } = usePhotos();
+  const aboutText = useMemo(() => {
+    if (!photoUri) return undefined;
+    const found = photos.find(p => p.uri === photoUri);
+    return found?.description;
+  }, [photos, photoUri]);
 
   useEffect(() => {
     console.log('Photo URI in result:', photoUri); // Debug log
@@ -76,11 +83,11 @@ export default function ResultScreen() {
           style={styles.treeBtn} 
           activeOpacity={0.8}
           onPress={() => {
-            // Navigate to external conditions with the photo data
-            navigation.navigate('external-conditions' as never, {
+            // Navigate to About page with the photo data
+            navigation.navigate('about' as never, {
               photoUri,
               photoBase64,
-              aiStatus: 'pending'
+              aboutText,
             });
           }}
         >
