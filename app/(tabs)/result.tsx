@@ -46,7 +46,7 @@ export default function ResultScreen() {
           <Text style={{ fontSize: 22, marginRight: 8 }}>🌴</Text>
           <Text style={styles.headerTitle}>COCOSCAN</Text>
         </View>
-        <TouchableOpacity onPress={() => navigation.navigate('index' as never)}>
+        <TouchableOpacity onPress={() => router.replace('/(tabs)/camera')} accessibilityRole="button" accessibilityLabel="Close and return to camera">
           <Text style={styles.closeBtn}>✕</Text>
         </TouchableOpacity>
       </View>
@@ -84,11 +84,7 @@ export default function ResultScreen() {
           activeOpacity={0.8}
           onPress={() => {
             // Navigate to About page with the photo data
-            navigation.navigate('about' as never, {
-              photoUri,
-              photoBase64,
-              aboutText,
-            });
+            router.push({ pathname: '/(tabs)/about', params: { photoUri, photoBase64, aboutText } });
           }}
         >
           <Text style={styles.treeBtnText}>ABOUT</Text>
@@ -99,12 +95,7 @@ export default function ResultScreen() {
           style={[styles.treeBtn, styles.treeBtnActive]}
           activeOpacity={0.8}
           onPress={() => {
-            navigation.navigate('treatment&control' as never, {
-              photoUri,
-              photoBase64,
-              aiStatus: 'pending',
-              aboutText,
-            });
+            router.push({ pathname: '/(tabs)/treatment-control', params: { aboutText, photoUri, photoBase64 } });
           }}
         >
           <Text style={styles.treeBtnText}>TREATMENT{"\n"}& CONTROL</Text>

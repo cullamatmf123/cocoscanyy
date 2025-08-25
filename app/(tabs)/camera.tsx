@@ -333,22 +333,25 @@ export default function Camera() {
         </View>
         
         <View style={styles.controlsContainer}>
-          <View style={styles.spacer} />
+          {/* Centered capture button */}
           <TouchableOpacity
-            style={styles.captureButton}
+            style={[styles.captureButton, styles.captureCenter]}
             onPress={handleTakePhoto}
             disabled={aiLoading}
           >
             <View style={styles.captureButtonInner} />
           </TouchableOpacity>
+
+          {/* Bottom-right gallery button */}
           <TouchableOpacity
-            style={styles.galleryButton}
+            style={[styles.galleryButton, styles.galleryRight]}
             onPress={handlePickImage}
             disabled={aiLoading}
           >
             <Text style={{ fontSize: 24 }}>🖼️</Text>
           </TouchableOpacity>
         </View>
+
         {aiLoading && (
           <View style={styles.aiModal}>
             <Text style={styles.aiText}>Analyzing Health & Plant...</Text>
@@ -379,20 +382,27 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   controlsContainer: {
-    position: 'absolute', bottom: 40, left: 0, right: 0,
-    flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40,
+    position: 'absolute', left: 0, right: 0, bottom: 40,
+    height: 100,
+    justifyContent: 'center', alignItems: 'center',
   },
   spacer: { flex: 1 },
   captureButton: {
     width: 70, height: 70, borderRadius: 35, backgroundColor: 'white',
     justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: 'red', marginHorizontal: 20,
   },
+  captureCenter: {
+    position: 'absolute', bottom: 0, alignSelf: 'center',
+  },
   captureButtonInner: {
     width: 55, height: 55, borderRadius: 27.5, backgroundColor: '#ff4444',
   },
   galleryButton: {
     width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(255,255,255,0.8)',
-    justifyContent: 'center', alignItems: 'center', marginLeft: 10,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  galleryRight: {
+    position: 'absolute', bottom: 10, right: 24,
   },
   aiModal: {
     position: 'absolute', top: '40%', left: '10%', right: '10%',
