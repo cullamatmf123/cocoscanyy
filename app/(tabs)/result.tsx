@@ -95,7 +95,18 @@ export default function ResultScreen() {
         </TouchableOpacity>
 
         {/* TREATMENT & CONTROL Button */}
-        <TouchableOpacity style={[styles.treeBtn, styles.treeBtnActive]} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={[styles.treeBtn, styles.treeBtnActive]}
+          activeOpacity={0.8}
+          onPress={() => {
+            navigation.navigate('treatment&control' as never, {
+              photoUri,
+              photoBase64,
+              aiStatus: 'pending',
+              aboutText,
+            });
+          }}
+        >
           <Text style={styles.treeBtnText}>TREATMENT{"\n"}& CONTROL</Text>
         </TouchableOpacity>
 

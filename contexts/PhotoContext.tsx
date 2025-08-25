@@ -9,11 +9,20 @@ export interface Photo {
   time: string;
   location: string;
   base64?: string;
+  // Plant identification data
   plantName?: string;
   scientificName?: string;
   description?: string;
   leafShape?: string;
   commonUses?: string;
+  // Health classification data
+  healthStatus?: 'Healthy' | 'Unhealthy';
+  healthConfidence?: number;
+  healthAnalysis?: {
+    prediction: string;
+    confidence: number;
+    timestamp: string;
+  };
 }
 
 interface PhotoContextType {
@@ -51,7 +60,14 @@ export const PhotoProvider: React.FC<PhotoProviderProps> = ({ children }) => {
       scientificName: 'Sample spp.',
       description: 'Sample plant for demonstration',
       leafShape: 'Sample shape',
-      commonUses: 'Ornamental'
+      commonUses: 'Ornamental',
+      healthStatus: 'Healthy',
+      healthConfidence: 85.2,
+      healthAnalysis: {
+        prediction: 'Healthy',
+        confidence: 85.2,
+        timestamp: '2024-01-30T14:30:00Z'
+      }
     },
     {
       id: 'mock-2',
@@ -63,7 +79,14 @@ export const PhotoProvider: React.FC<PhotoProviderProps> = ({ children }) => {
       scientificName: 'Sample spp. 2',
       description: 'Another sample plant',
       leafShape: 'Sample shape 2',
-      commonUses: 'Culinary'
+      commonUses: 'Culinary',
+      healthStatus: 'Unhealthy',
+      healthConfidence: 72.8,
+      healthAnalysis: {
+        prediction: 'Unhealthy',
+        confidence: 72.8,
+        timestamp: '2024-01-30T12:15:00Z'
+      }
     }
   ]);
 
