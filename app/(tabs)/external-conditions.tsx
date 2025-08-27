@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert, ScrollView, BackHandler } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons';
+// import { Ionicons } from '@expo/vector-icons';
 
 export default function ExternalConditions() {
   const navigation = useNavigation();
@@ -65,9 +64,19 @@ export default function ExternalConditions() {
     }
   };
 
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem('isLoggedIn');
-    router.replace('/login');
+  // Hardware back button on Android should go back to camera
+  useEffect(() => {
+    const onBackPress = () => {
+      router.replace('/(tabs)/camera');
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [router]);
+
+  // Cancel button should take user to homepage
+  const handleCancel = () => {
+    router.replace('/(tabs)/homepage');
   };
 
   return (
@@ -129,10 +138,9 @@ export default function ExternalConditions() {
         </View>
       </ScrollView>
 
-      {/* Floating Logout Button */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Ionicons name="log-out" size={20} color="white" />
-        <Text style={styles.logoutButtonText}>Logout</Text>
+      {/* Floating Cancel Button */}
+      <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+        <Text style={styles.cancelButtonText}>Cancel</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -237,7 +245,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     letterSpacing: 1,
   },
-  logoutButton: {
+  cancelButton: {
     position: 'absolute',
     bottom: 30,
     right: 20,
@@ -250,10 +258,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  logoutButtonText: {
+  cancelButtonText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 8,
+    fontWeight: '600',
   },
 });

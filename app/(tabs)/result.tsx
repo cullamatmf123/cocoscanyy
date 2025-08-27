@@ -1,15 +1,17 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image, Alert, ScrollView } from 'react-native';
 import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router';
 import { usePhotos } from '../../contexts/PhotoContext';
 
 export default function ResultScreen() {
   const navigation = useNavigation();
   const router = useRouter();
-  const { photoUri, photoBase64 } = useLocalSearchParams<{
+  const { photoUri, photoBase64, aiStatus, weather, soil } = useLocalSearchParams<{
     photoUri?: string;
     photoBase64?: string;
     aiStatus?: string;
+    weather?: string;
+    soil?: string;
   }>();
   const { photos } = usePhotos();
   const aboutText = useMemo(() => {
@@ -46,6 +48,7 @@ export default function ResultScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      {/* Header */}
       <View style={styles.headerBar}>
         <View style={styles.logoRow}>
           <Text style={{ fontSize: 22, marginRight: 8 }}>🌴</Text>
@@ -56,63 +59,85 @@ export default function ResultScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
-        {/* Captured Image */}
-        <View style={styles.imageContainer}>
-          {!!photoUri ? (
-            <Image 
-              source={{ uri: photoUri }} 
-              style={styles.image}
-              resizeMode="contain"
-              onError={(e) => {
-                console.log('Image loading error:', e.nativeEvent.error);
-                if (!photoBase64) {
-                  Alert.alert('Error', 'Failed to load image');
-                }
-              }}
-            />
-          ) : null}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Scan Result</Text>
+          {/* Image */}
+          <View style={styles.imageFrame}>
+            {!!photoUri ? (
+              <Image
+                source={{ uri: photoUri }}
+                style={styles.image}
+                resizeMode="cover"
+                onError={(e) => {
+                  console.log('Image loading error:', e.nativeEvent.error);
+                  if (!photoBase64) Alert.alert('Error', 'Failed to load image');
+                }}
+              />
+            ) : null}
+            {!photoUri && photoBase64 ? (
+              <Image
+                source={{ uri: `data:image/jpeg;base64,${photoBase64}` }}
+                style={styles.image}
+                resizeMode="cover"
+              />
+            ) : null}
+          </View>
 
-          {/* Fallback to base64 if file URI is not available or fails */}
-          {!photoUri && photoBase64 ? (
-            <Image
-              source={{ uri: `data:image/jpeg;base64,${photoBase64}` }}
-              style={styles.image}
-              resizeMode="contain"
-            />
-          ) : null}
+          {/* Info chips */}
+          <View style={styles.chipsRow}>
+            {!!aiStatus && (
+              <View style={[styles.chip, aiStatus?.toLowerCase() === 'healthy' ? styles.chipHealthy : styles.chipWarn]}>
+                <Text style={styles.chipText}>AI: {String(aiStatus)}</Text>
+              </View>
+            )}
+            {!!weather && (
+              <View style={styles.chip}>
+                <Text style={styles.chipText}>Weather: {String(weather)}</Text>
+              </View>
+            )}
+            {!!soil && (
+              <View style={styles.chip}>
+                <Text style={styles.chipText}>Soil: {String(soil)}</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Buttons */}
+          <View style={styles.buttonsCol}>
+            <TouchableOpacity
+              style={[styles.primaryBtn, styles.btnShadow]}
+              activeOpacity={0.9}
+              onPress={() => router.push({ pathname: '/(tabs)/about', params: { photoUri, aboutText } })}
+            >
+              <Text style={styles.primaryBtnText}>About Plant</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.secondaryBtn, styles.btnShadow]}
+              activeOpacity={0.9}
+              onPress={() => router.push({ pathname: '/(tabs)/treatment-control', params: { aboutText, photoUri, photoBase64 } })}
+            >
+              <Text style={styles.secondaryBtnText}>Treatment & Control</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.ghostBtn]} activeOpacity={0.9}>
+              <Text style={styles.ghostBtnText}>Pesticide Recommendation</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-        
-        {/* ABOUT Button */}
-        <TouchableOpacity 
-          style={styles.treeBtn} 
-          activeOpacity={0.8}
-          onPress={() => {
-            // Navigate to About page with the photo data
-            router.push({ pathname: '/(tabs)/about', params: { photoUri, aboutText } });
-          }}
-        >
-          <Text style={styles.treeBtnText}>ABOUT</Text>
-        </TouchableOpacity>
 
-        {/* TREATMENT & CONTROL Button */}
-        <TouchableOpacity
-          style={[styles.treeBtn, styles.treeBtnActive]}
-          activeOpacity={0.8}
-          onPress={() => {
-            router.push({ pathname: '/(tabs)/treatment-control', params: { aboutText, photoUri, photoBase64 } });
-          }}
-        >
-          <Text style={styles.treeBtnText}>TREATMENT{"\n"}& CONTROL</Text>
-        </TouchableOpacity>
-
-        {/* PESTICIDE RECOMMENDATION Button */}
-        <TouchableOpacity style={styles.treeBtn} activeOpacity={0.8}>
-          <Text style={styles.treeBtnText}>
-            PESTICIDE{"\n"}RECOMMENDATION
-          </Text>
-        </TouchableOpacity>
-      </View>
+        {/* Footer actions */}
+        <View style={styles.footerRow}>
+          <TouchableOpacity style={styles.footerBtn} onPress={() => router.replace('/(tabs)/camera')}>
+            <Text style={styles.footerBtnText}>Scan Again</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.footerBtn, styles.footerBtnAlt]} onPress={() => router.replace('/(tabs)/homepage')}>
+            <Text style={[styles.footerBtnText, styles.footerBtnTextAlt]}>Home</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -121,6 +146,10 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: '#f7f7f7',
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 24,
   },
   loadingContainer: {
     flex: 1,
@@ -153,51 +182,126 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     padding: 4,
   },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    paddingTop: 20,
-    backgroundColor: '#f7f7f7',
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
-  imageContainer: {
-    width: '90%',
-    height: 250,
-    backgroundColor: 'transparent',
-    borderRadius: 0,
-    marginBottom: 20,
-    elevation: 0,
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    overflow: 'visible',
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#2d5a3d',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  imageFrame: {
+    width: '100%',
+    height: 240,
+    backgroundColor: '#f0f2f0',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 12,
   },
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: 8,
   },
-  treeBtn: {
-    width: 260,
-    height: 80,
-    borderRadius: 24,
-    marginBottom: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+  chipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  chip: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: '#E8F5E9',
+  },
+  chipText: {
+    color: '#2d5a3d',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  chipHealthy: {
+    backgroundColor: '#E6F4EA',
+  },
+  chipWarn: {
+    backgroundColor: '#FFF1F0',
+  },
+  buttonsCol: {
+    marginTop: 8,
+    gap: 12,
+  },
+  btnShadow: {
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
     elevation: 2,
-    backgroundColor: '#fff',
-    borderWidth: 0,
   },
-  treeBtnActive: {
-    borderWidth: 4,
-    borderColor: '#1C8FFF',
+  primaryBtn: {
+    backgroundColor: '#FFD700',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
   },
-  treeBtnText: {
-    color: '#222',
-    fontWeight: 'bold',
-    fontSize: 26,
-    letterSpacing: 0.5,
-    textAlign: 'center',
-    lineHeight: 32,
+  primaryBtnText: {
+    color: '#2d5a3d',
+    fontWeight: '800',
+    fontSize: 16,
+  },
+  secondaryBtn: {
+    backgroundColor: '#2d5a3d',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  secondaryBtnText: {
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 16,
+  },
+  ghostBtn: {
+    backgroundColor: '#ffffff',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  ghostBtnText: {
+    color: '#1f2937',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  footerBtn: {
+    flex: 1,
+    backgroundColor: '#2d5a3d',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  footerBtnAlt: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  footerBtnText: {
+    color: '#ffffff',
+    fontWeight: '800',
+  },
+  footerBtnTextAlt: {
+    color: '#1f2937',
   },
 });

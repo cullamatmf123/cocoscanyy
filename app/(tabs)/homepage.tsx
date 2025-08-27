@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Dimensions, ImageBackground, Platform, StatusBar } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Dimensions, ImageBackground, Platform, StatusBar, Modal, Animated, Easing, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,6 +9,9 @@ const { width, height } = Dimensions.get('window');
 export default function HomePage() {
   const router = useRouter();
   const isTall = height >= 800;
+  const [menuVisible, setMenuVisible] = useState(false);
+  const panelWidth = Math.min(width * 0.82, 360);
+  const slideX = useRef(new Animated.Value(panelWidth)).current;
 
   // Check login state on mount
   useEffect(() => {
@@ -34,6 +37,30 @@ export default function HomePage() {
     router.replace('/login');
   };
 
+  const openMenu = () => {
+    setMenuVisible(true);
+    Animated.timing(slideX, {
+      toValue: 0,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  };
+  const closeMenu = () => {
+    Animated.timing(slideX, {
+      toValue: panelWidth,
+      duration: 200,
+      easing: Easing.in(Easing.cubic),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) setMenuVisible(false);
+    });
+  };
+  const handleProfile = () => {
+    setMenuVisible(false);
+    router.push('/(tabs)/profile');
+  };
+
   return (
     <SafeAreaView style={[styles.container, Platform.OS === 'android' ? { paddingTop: (StatusBar.currentHeight || 24) } : null]}>
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
@@ -45,7 +72,7 @@ export default function HomePage() {
         {/* Top-right menu icon */}
         <TouchableOpacity
           style={styles.menuButton}
-          onPress={() => router.push('/(tabs)/about')} // I CHANGE PA ANG ABOUT
+          onPress={openMenu}
           hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
           accessibilityRole="button"
           accessibilityLabel="Open menu"
@@ -140,11 +167,30 @@ export default function HomePage() {
           </View>
         </ScrollView>
 
-        {/* Floating Logout Button (keep at bottom-right) */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Ionicons name="log-out" size={20} color="white" />
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
+        {/* Right-side Drawer Menu */}
+        <Modal visible={menuVisible} transparent animationType="fade" onRequestClose={closeMenu}>
+          <View style={styles.drawerOverlay}>
+            <Pressable style={styles.drawerBackdrop} onPress={closeMenu} accessibilityLabel="Close menu" />
+            <Animated.View style={[styles.drawerPanel, { transform: [{ translateX: slideX }] }]}>
+              <View style={styles.drawerHeader}>
+                <Text style={styles.drawerTitle}>Menu</Text>
+                <TouchableOpacity onPress={closeMenu} accessibilityLabel="Close">
+                  <Ionicons name="close" size={22} color="#E0E0E0" />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity style={styles.drawerItem} onPress={handleProfile}>
+                <Ionicons name="person" size={20} color="#E8F5E9" />
+                <Text style={styles.drawerItemText}>Profile</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.drawerItem, styles.drawerItemDanger]} onPress={handleLogout}>
+                <Ionicons name="log-out" size={20} color="#FFCDD2" />
+                <Text style={[styles.drawerItemText, styles.drawerItemDangerText]}>Logout</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        </Modal>
       </ImageBackground>
     </SafeAreaView>
   );
@@ -352,5 +398,59 @@ const styles = StyleSheet.create({
     right: 20,
     zIndex: 20,
     backgroundColor: 'transparent',
+  },
+  drawerOverlay: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  drawerBackdrop: {
+    flex: 1,
+  },
+  drawerPanel: {
+    width: Math.min(width * 0.82, 360),
+    backgroundColor: '#121212',
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: -2, height: 2 },
+  },
+  drawerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  drawerTitle: {
+    color: '#E0E0E0',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  drawerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: 'rgba(46,125,50,0.12)',
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  drawerItemText: {
+    color: '#E8F5E9',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  drawerItemDanger: {
+    backgroundColor: 'rgba(211,47,47,0.10)',
+  },
+  drawerItemDangerText: {
+    color: '#FFCDD2',
   },
 });

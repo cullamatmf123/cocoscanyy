@@ -7,6 +7,7 @@ import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
 import { usePhotos } from '../../contexts/PhotoContext';
+import { healthClassificationService, HealthPrediction } from '../lib/healthClassificationService';
 
 // Plant dataset for leaf identification
 const plantDataset = [
@@ -64,6 +65,30 @@ export default function Camera() {
   const [aiLoading, setAiLoading] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState<any>(null);
   const [identifiedPlant, setIdentifiedPlant] = useState<any>(null);
+  const [healthPrediction, setHealthPrediction] = useState<HealthPrediction | null>(null);
+  const [modelStatus, setModelStatus] = useState('Initializing...');
+
+  // Initialize health classification service
+  useEffect(() => {
+    initializeHealthService();
+  }, []);
+
+  const initializeHealthService = async () => {
+    try {
+      await healthClassificationService.initialize();
+      // Try to load model, but don't fail if it's not available
+      try {
+        await healthClassificationService.loadModel();
+        setModelStatus('AI Model Ready');
+      } catch (error) {
+        console.log('Model not available, using mock predictions');
+        setModelStatus('Using Demo Mode');
+      }
+    } catch (error) {
+      console.error('Failed to initialize health service:', error);
+      setModelStatus('AI Unavailable');
+    }
+  };
 
   // Request media library permission on mount
   useEffect(() => {
@@ -112,6 +137,22 @@ export default function Camera() {
     return plantDataset[randomIndex];
   };
 
+  // Health classification
+  const classifyHealth = async (imageUri: string): Promise<HealthPrediction> => {
+    try {
+      if (healthClassificationService.isReady()) {
+        return await healthClassificationService.classifyHealth(imageUri);
+      } else {
+        // Use mock classification if model is not available
+        return await healthClassificationService.mockClassifyHealth();
+      }
+    } catch (error) {
+      console.error('Health classification failed:', error);
+      // Fallback to mock if real classification fails
+      return await healthClassificationService.mockClassifyHealth();
+    }
+  };
+
   // Take a photo
   const handleTakePhoto = async () => {
     if (aiLoading) return;
@@ -128,8 +169,13 @@ export default function Camera() {
 
         if (!photo) throw new Error('Failed to take photo');
 
+        // Run both plant identification and health classification
         const plant = identifyPlant(photo.base64 || '');
         setIdentifiedPlant(plant);
+
+        // Classify health status
+        const healthResult = await classifyHealth(photo.uri);
+        setHealthPrediction(healthResult);
 
         const fileName = `photo_${Date.now()}.jpg`;
         const fileUri = `${FileSystem.documentDirectory}${fileName}`;
@@ -149,16 +195,21 @@ export default function Camera() {
           time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
           location: 'Camera Capture',
           base64: photo.base64,
+          // Plant data
           plantName: plant?.name,
           scientificName: plant?.scientificName,
           description: plant?.description,
           leafShape: plant?.leafShape,
-          commonUses: plant?.commonUses
+          commonUses: plant?.commonUses,
+          // Health data
+          healthStatus: healthResult.prediction,
+          healthConfidence: healthResult.confidence,
+          healthAnalysis: healthResult
         };
         addPhoto(newPhoto);
 
         // Show preview
-        setCapturedPhoto({ ...photo, fileUri, newPhoto, plant });
+        setCapturedPhoto({ ...photo, fileUri, newPhoto, plant, healthResult });
 
       } catch (error) {
         console.error('Camera error:', error);
@@ -187,16 +238,20 @@ export default function Camera() {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const asset = result.assets[0];
 
-      // Persist the picked image to a stable app document path to avoid ENOENT from temp cache cleanup
       try {
+        setAiLoading(true);
+        
         const uri = asset.uri;
         const inferredNameFromUri = uri.split('/').pop() || `image_${Date.now()}.jpg`;
         const hasExtension = /\.[a-zA-Z0-9]+$/.test(inferredNameFromUri);
         const fileName = hasExtension ? inferredNameFromUri : `image_${Date.now()}.jpg`;
         const destUri = `${FileSystem.documentDirectory}${fileName}`;
 
-        // Copy from ImagePicker cache (file:// or content:// converted by ImagePicker) into app docs dir
         await FileSystem.copyAsync({ from: uri, to: destUri });
+
+        // Classify health status for gallery image
+        const healthResult = await classifyHealth(destUri);
+        setHealthPrediction(healthResult);
 
         const newPhoto = {
           id: `gallery-${Date.now()}`,
@@ -205,12 +260,17 @@ export default function Camera() {
           time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
           location: 'Gallery',
           base64: asset.base64,
+          healthStatus: healthResult.prediction,
+          healthConfidence: healthResult.confidence,
+          healthAnalysis: healthResult
         };
         addPhoto(newPhoto);
-        setCapturedPhoto({ ...asset, uri: destUri, fileUri: destUri, newPhoto, plant: null });
+        setCapturedPhoto({ ...asset, uri: destUri, fileUri: destUri, newPhoto, plant: null, healthResult });
       } catch (err) {
-        console.error('Failed to persist picked image:', err);
-        Alert.alert('Error', 'Failed to open selected image. Please try again.');
+        console.error('Failed to process picked image:', err);
+        Alert.alert('Error', 'Failed to process selected image. Please try again.');
+      } finally {
+        setAiLoading(false);
       }
     }
   };
@@ -223,9 +283,10 @@ export default function Camera() {
         photoBase64: capturedPhoto.base64,
         aiStatus: 'completed',
         identifiedPlant: capturedPhoto.plant,
+        healthPrediction: capturedPhoto.healthResult,
         photoData: capturedPhoto.newPhoto
       });
-      setCapturedPhoto(null); // Optional: clear preview after navigating
+      setCapturedPhoto(null);
     }
   };
 
@@ -233,6 +294,7 @@ export default function Camera() {
   const handleRetake = () => {
     setCapturedPhoto(null);
     setIdentifiedPlant(null);
+    setHealthPrediction(null);
   };
 
   // Main render
@@ -246,6 +308,23 @@ export default function Camera() {
             resizeMode="contain"
           />
         </TouchableOpacity>
+        
+        {/* Health Status Overlay */}
+        {capturedPhoto.healthResult && (
+          <View style={styles.healthOverlay}>
+            <Text style={styles.healthTitle}>Health Status</Text>
+            <Text style={[
+              styles.healthStatus,
+              { color: capturedPhoto.healthResult.prediction === 'Healthy' ? '#4CAF50' : '#F44336' }
+            ]}>
+              {capturedPhoto.healthResult.prediction}
+            </Text>
+            <Text style={styles.healthConfidence}>
+              {capturedPhoto.healthResult.confidence}% confidence
+            </Text>
+          </View>
+        )}
+        
         <TouchableOpacity style={styles.retakeButton} onPress={handleRetake}>
           <Text style={styles.retakeText}>Retake</Text>
         </TouchableOpacity>
@@ -260,6 +339,11 @@ export default function Camera() {
         facing={facing}
         ref={cameraRef}
       >
+        {/* Model Status Indicator */}
+        <View style={styles.statusIndicator}>
+          <Text style={styles.statusText}>{modelStatus}</Text>
+        </View>
+        
         <View style={styles.controlsContainer}>
           {/* Centered capture button */}
           <TouchableOpacity
@@ -281,7 +365,9 @@ export default function Camera() {
         </View>
 
         {aiLoading && (
-          <View style={styles.aiModal}><Text style={styles.aiText}>Analyzing...</Text></View>
+          <View style={styles.aiModal}>
+            <Text style={styles.aiText}>Analyzing Health & Plant...</Text>
+          </View>
         )}
       </CameraView>
     </View>
@@ -292,6 +378,21 @@ const { width, height } = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   camera: { flex: 1 },
+  statusIndicator: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  statusText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   controlsContainer: {
     position: 'absolute', left: 0, right: 0, bottom: 40,
     height: 100,
@@ -322,6 +423,31 @@ const styles = StyleSheet.create({
   aiText: { color: 'white', fontSize: 22, fontWeight: 'bold' },
   previewContainer: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   previewImage: { width: width, height: height, resizeMode: 'contain' },
+  healthOverlay: {
+    position: 'absolute',
+    top: 80,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  healthTitle: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  healthStatus: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  healthConfidence: {
+    color: '#ccc',
+    fontSize: 14,
+  },
   retakeButton: {
     position: 'absolute', bottom: 60, alignSelf: 'center', backgroundColor: '#fff', padding: 12, borderRadius: 20,
   },
