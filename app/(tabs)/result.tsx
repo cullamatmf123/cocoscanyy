@@ -29,6 +29,11 @@ export default function ResultScreen() {
     }
   }, [photoUri]);
 
+  // Prefetch About screen background image to reduce perceived delay
+  useEffect(() => {
+    Image.prefetch('https://img.ixintu.com/download/jpg/201912/a833e887736eb56c8fa60d5e76410e4c.jpg!con');
+  }, []);
+
   if (!photoUri) {
     return (
       <SafeAreaView style={styles.safe}>
@@ -84,7 +89,7 @@ export default function ResultScreen() {
           activeOpacity={0.8}
           onPress={() => {
             // Navigate to About page with the photo data
-            router.push({ pathname: '/(tabs)/about', params: { photoUri, photoBase64, aboutText } });
+            router.push({ pathname: '/(tabs)/about', params: { photoUri, aboutText } });
           }}
         >
           <Text style={styles.treeBtnText}>ABOUT</Text>

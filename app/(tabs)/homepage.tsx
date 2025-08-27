@@ -115,12 +115,26 @@ export default function HomePage() {
                 <Text style={{ fontSize: 28 }}>🌴</Text>
               </View>
 
-              <TouchableOpacity style={[styles.pillBtn, { width: Math.min(width * 0.8, 360) }]} activeOpacity={0.85} onPress={handleCapture}>
-                <Text style={styles.pillBtnText}>Capture</Text>
+              <TouchableOpacity
+                style={[styles.cameraBtn, { width: Math.min(width * 0.6, 260) }]}
+                activeOpacity={0.9}
+                onPress={handleCapture}
+              >
+                <View style={styles.cameraIconCircle}>
+                  <Ionicons name="camera" size={14} color="#FFFFFF" />
+                </View>
+                <Text style={styles.cameraBtnText}>Start Scanning</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={[styles.pillBtn, { width: Math.min(width * 0.8, 360) }]} activeOpacity={0.85} onPress={handleHistory}>
-                <Text style={styles.pillBtnText}>View History</Text>
+              <TouchableOpacity
+                style={[styles.cameraBtn, { width: Math.min(width * 0.6, 260) }]}
+                activeOpacity={0.9}
+                onPress={handleHistory}
+              >
+                <View style={styles.cameraIconCircle}>
+                  <Ionicons name="time" size={14} color="#FFFFFF" />
+                </View>
+                <Text style={styles.cameraBtnText}>View History</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -270,6 +284,39 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
+  },
+  cameraBtn: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#2E7D32',
+    borderWidth: 1,
+    height: 56,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginTop: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  cameraIconCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#2E7D32',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
+  },
+  cameraBtnText: {
+    color: '#2E7D32',
+    fontWeight: '800',
+    fontSize: 18,
+    letterSpacing: 0.3,
   },
   pillBtnText: {
     color: '#1b6a47',

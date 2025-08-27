@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import { useNavigation } from 'expo-router';
-import { Button, StyleSheet, Text, TouchableOpacity, View, Image, Dimensions, Alert } from 'react-native';
+import { Button, StyleSheet, Text, TouchableOpacity, View, Image, Dimensions, Alert, BackHandler } from 'react-native';
+import { useRouter } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
@@ -57,6 +58,7 @@ export default function Camera() {
   const [mediaPermission, setMediaPermission] = useState<MediaLibrary.PermissionResponse | null>(null);
   const cameraRef = useRef<CameraView | null>(null);
   const navigation = useNavigation();
+  const router = useRouter();
   const { addPhoto } = usePhotos();
 
   const [aiLoading, setAiLoading] = useState(false);
@@ -70,6 +72,16 @@ export default function Camera() {
       setMediaPermission(status);
     })();
   }, []);
+
+  // Always go back to homepage on Android hardware back
+  useEffect(() => {
+    const onBackPress = () => {
+      router.replace('/(tabs)/homepage');
+      return true; // prevent default behavior
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [router]);
 
   if (!permission || !mediaPermission) {
     return <View />;
