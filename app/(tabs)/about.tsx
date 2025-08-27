@@ -1,18 +1,31 @@
 import React from 'react';
 import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, ScrollView, ImageBackground } from 'react-native';
-import { useNavigation, useRouter } from 'expo-router';
+import { useNavigation, useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function AboutScreen() {
   const router = useRouter();
   const navigation = useNavigation<any>();
+  const { photoUri, photoBase64, aiStatus, weather, soil, aboutText } = useLocalSearchParams<{
+    photoUri?: string;
+    photoBase64?: string;
+    aiStatus?: string;
+    weather?: string;
+    soil?: string;
+    aboutText?: string;
+  }>();
 
   const handleClose = () => {
-    // Behave like a back button; if no history, go to Result page
-    if (typeof navigation?.canGoBack === 'function' && navigation?.canGoBack?.()) {
-      navigation.goBack();
-    } else {
-      router.replace('/(tabs)/result');
-    }
+    // Always go to Result page, preserving params so it doesn't redirect away
+    router.replace({
+      pathname: '/(tabs)/result',
+      params: {
+        photoUri: photoUri as string | undefined,
+        photoBase64: photoBase64 as string | undefined,
+        aiStatus: aiStatus as string | undefined,
+        weather: weather as string | undefined,
+        soil: soil as string | undefined,
+      },
+    });
   };
 
   return (
@@ -89,7 +102,7 @@ const styles = StyleSheet.create({
   },
   closeBtn: {
     color: '#fff',
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
     padding: 4,
   },

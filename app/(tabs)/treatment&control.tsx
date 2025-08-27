@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   headerTitle: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
-  closeBtn: { color: '#fff', fontSize: 22, fontWeight: 'bold', padding: 4 },
+  closeBtn: { color: '#fff', fontSize: 18, fontWeight: 'bold', padding: 4 },
   content: { alignItems: 'center', paddingTop: 16, paddingHorizontal: 12 },
   imageContainer: { width: '95%', height: 220, marginBottom: 16 },
   image: { width: '100%', height: '100%', borderRadius: 8 },

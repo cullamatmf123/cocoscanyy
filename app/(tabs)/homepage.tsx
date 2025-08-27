@@ -136,7 +136,7 @@ export default function HomePage() {
           <View style={styles.cardWrap}>
             <View style={[
               styles.card,
-              Platform.OS === 'android' ? { marginTop: isTall ? 84 : 64, minHeight: isTall ? 380 : 320, paddingTop: isTall ? 64 : 48 } : null
+              Platform.OS === 'android' ? { marginTop: isTall ? 84 : 64, minHeight: isTall ? 420 : 360, paddingTop: isTall ? 64 : 48 } : { marginTop: isTall ? 84 : 64, minHeight: isTall ? 420 : 360, paddingTop: isTall ? 64 : 48 }
             ]}>
               <View style={styles.logoEmblem}>
                 <Text style={{ fontSize: 28 }}>🌴</Text>
@@ -175,7 +175,7 @@ export default function HomePage() {
               <View style={styles.drawerHeader}>
                 <Text style={styles.drawerTitle}>Menu</Text>
                 <TouchableOpacity onPress={closeMenu} accessibilityLabel="Close">
-                  <Ionicons name="close" size={22} color="#E0E0E0" />
+                  <Ionicons name="close" size={18} color="#E0E0E0" />
                 </TouchableOpacity>
               </View>
 
@@ -297,8 +297,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#27613A',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     overflow: 'hidden',
     paddingHorizontal: 20,
     paddingVertical: 28,

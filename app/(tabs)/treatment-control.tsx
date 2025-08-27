@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   },
   closeBtn: {
     color: '#fff',
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
     padding: 4,
   },
