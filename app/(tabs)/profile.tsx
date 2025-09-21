@@ -8,10 +8,23 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { photos } = usePhotos();
 
+  // Measure header and cover heights to place avatar just above the name
+  const AVATAR_SIZE = 84;
+  const NAME_TOP_PADDING = 40; // profileHeader.paddingTop
+  const NAME_MARGIN_TOP = 4; // styles.name.marginTop
+  const GAP_ABOVE_NAME = -28; // raise avatar slightly (more space above the name)
+  const [headerH, setHeaderH] = React.useState(0);
+  const [coverH, setCoverH] = React.useState(140);
+  // Top of the name in the screen = headerH + coverH + NAME_TOP_PADDING + NAME_MARGIN_TOP
+  const avatarTop = Math.max(
+    0,
+    headerH + coverH + NAME_TOP_PADDING + NAME_MARGIN_TOP - AVATAR_SIZE - GAP_ABOVE_NAME
+  );
+
   return (
     <SafeAreaView style={[styles.container, Platform.OS === 'android' ? { paddingTop: (StatusBar.currentHeight || 24) } : null]}>
       {/* Top bar */}
-      <View style={styles.header}>
+      <View style={styles.header} onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)}>
         <TouchableOpacity onPress={() => router.replace('/(tabs)/homepage')} style={styles.backBtn} accessibilityRole="button" accessibilityLabel="Go to homepage">
           <Ionicons name="arrow-back" size={22} color="#1b1b1b" />
         </TouchableOpacity>
@@ -19,8 +32,8 @@ export default function ProfileScreen() {
         <View style={{ width: 44 }} />
       </View>
 
-      {/* Cover and avatar */}
-      <View style={styles.coverWrap}>
+      {/* Cover */}
+      <View style={styles.coverWrap} onLayout={(e) => setCoverH(e.nativeEvent.layout.height)}>
         <ImageBackground
           source={{ uri: 'https://img.ixintu.com/download/jpg/201912/a833e887736eb56c8fa60d5e76410e4c.jpg!con' }}
           style={styles.cover}
@@ -28,14 +41,17 @@ export default function ProfileScreen() {
         >
           <View style={styles.coverOverlay} />
         </ImageBackground>
-        <View style={styles.avatarWrap}>
-          <View style={styles.avatarCircle}>
-            <Image
-              source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXunsSV3Og-I49ehwGoV-PZkL_mg50pl-SPA&s' }}
-              style={styles.avatarImage}
-              resizeMode="cover"
-            />
-          </View>
+      </View>
+
+      {/* Floating avatar above everything */}
+      <View style={[styles.avatarWrap, { top: avatarTop }]}>
+        <View style={styles.avatarBgCircle} />
+        <View style={styles.avatarCircle}>
+          <Image
+            source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXunsSV3Og-I49ehwGoV-PZkL_mg50pl-SPA&s' }}
+            style={styles.avatarImage}
+            resizeMode="cover"
+          />
         </View>
       </View>
 
@@ -82,6 +98,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F6FBF7',
+    position: 'relative',
   },
   header: {
     flexDirection: 'row',
@@ -125,30 +142,43 @@ const styles = StyleSheet.create({
   avatarWrap: {
     position: 'absolute',
     left: 24,
-    bottom: -20,
-    zIndex: 100,
-    elevation: 10,
+    top: 78,
+    zIndex: 200,
+    elevation: 12,
+    pointerEvents: 'box-none',
+  },
+  avatarBgCircle: {
+    position: 'absolute',
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    backgroundColor: '#FFFFFF',
+    top: -4,
+    left: -4,
+    zIndex: 0,
   },
   avatarCircle: {
     width: 84,
     height: 84,
     borderRadius: 42,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 4,
-    borderColor: '#F6FBF7',
+    borderWidth: 0,
+    borderColor: 'transparent',
     elevation: 2,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
     overflow: 'hidden',
+    zIndex: 1,
   },
   avatarImage: {
     width: '100%',
     height: '100%',
     borderRadius: 42,
+    zIndex: 2,
   },
   // Name + actions
   profileHeader: {
